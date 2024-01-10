@@ -593,19 +593,6 @@ video {
   height: 100%;
 }
 
-.max-h-14 {
-  max-height: 3.5rem;
-}
-
-.max-h-16 {
-  max-height: 4rem;
-}
-
-.min-h-fit {
-  min-height: -moz-fit-content;
-  min-height: fit-content;
-}
-
 .grow {
   flex-grow: 1;
 }
@@ -712,9 +699,4 @@ video {
 .text-peach {
   --tw-text-opacity: 1;
   color: rgba(var(--ctp-peach), var(--tw-text-opacity));
-}
-
-.text-pink {
-  --tw-text-opacity: 1;
-  color: rgba(var(--ctp-pink), var(--tw-text-opacity));
 }

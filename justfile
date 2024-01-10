@@ -1,5 +1,6 @@
 alias ct := c-test
-alias api := api-test
+# alias api := api-test
+alias tw := tailwind
 
 run:
   cargo leptos watch
@@ -9,7 +10,10 @@ c-test:
 
 test:
   just ct
-  just api-test
+  # just api-test
 
-api-test:
-  python3 ./test-data/test.py
+# api-test:
+#   python3 ./test-data/test.py
+
+tailwind:
+  npx tailwindcss -i ./input.css -o ./style/output.css --watch
