@@ -53,12 +53,13 @@ fn HomePage() -> impl IntoView {
     // Creates a reactive value to update the button
     let (funcs, set_func) = create_signal(initial_funcs);
     let mut next_counter_id = initial_length;
+    let mut graph_i = 0;
 
     let (min, set_min) = create_signal(String::new());
     let (max, set_max) = create_signal(String::new());
     let (bg_img, set_bg_img) = create_signal(String::new());
     let (graphs, set_graphs) = create_signal(Vec::<(usize, String)>::new());
-    let (graph_i, set_graph_i) = create_signal(0);
+    // let (graph_i, set_graph_i) = create_signal(0);
 
     let input_element: NodeRef<Input> = create_node_ref();
     let img_input_element: NodeRef<Input> = create_node_ref();
@@ -163,7 +164,7 @@ fn HomePage() -> impl IntoView {
                                                                 let b64 = format!("data:image/png;base64,{graph_dat}");
                                                                 // graph_elm.set_src(&b64);
                                                                 set_graphs.update(|graphs| graphs.push((graphs.len(), b64)));
-                                                                set_graph_i.set((move || graphs.get().len() - 1)());
+                                                                graph_i += 1;
                                                             }
                                                             Err(e) => {
                                                                 error!("{e}");
@@ -204,9 +205,9 @@ fn HomePage() -> impl IntoView {
                                         name="query[max]" required value="10" class="text-crust bg-overlay2 rounded-lg p-1"/><br/>
                                     <label for="function">Function:</label>  // <br/>
                                     <input type="text" id="function" name="query[funcs]" value="" class="text-crust bg-overlay2 rounded-lg p-1" node_ref=input_element/>
-                                    <input type="submit" id="addFunc" value=" Add Function " class="bg-sapphire text-crust p-1 rounded-lg"/><br/>
+                                    <input type="submit" id="addFunc" value=" Add Function " class="bg-sapphire hover:bg-sky !@text-crust p-1 rounded-lg"/><br/>
                                     <br/>
-                                    <input type="submit" id="plot" value="  Plot  " class="bg-green p-3 text-xl rounded-lg text-crust"/>
+                                    <input type="submit" id="plot" value="  Plot  " class="bg-green hover:bg-teal p-3 text-xl rounded-lg text-crust"/>
                                     <br/>
                                     <br/>
                                     // <p></p>
@@ -265,7 +266,7 @@ fn HomePage() -> impl IntoView {
                                                             f.retain(|(counter_id, _, _)| counter_id != &id)
                                                         });
                                                     }
-                                                    class="text-crust bg-red rounded-lg p-1"
+                                                    class="text-crust bg-red hover:bg-maroon rounded-lg p-1"
                                                 >
                                                     "  Remove  "
                                                 </button>
@@ -281,34 +282,12 @@ fn HomePage() -> impl IntoView {
                     <section id="display" class="grid grid-rows-10" >
                         <div class="row-span-8">
                             // TODO: make this display the graph from graphs identified by graph_i
-                            <img id="graph" class="rounded-lg size-full justify-center items-center" node_ref=graph_view src={move || { graphs.get().get(graph_i.get()).unwrap_or(&(0_usize, String::new())).1.clone() }}/>
+                            <img id="graph" class="rounded-lg size-full justify-center items-center" node_ref=graph_view src={move || { graphs.get().get(graph_i).unwrap_or(&(0_usize, String::new())).1.clone() }}/>
                         </div>
                         <div class="grid flex grid-cols-7 text-2xl">
-                            // TODO: put the circles here
-                            // <For
-                            //     // `each` takes any function that returns an iterator
-                            //     // this should usually be a signal or derived signal
-                            //     // if it's not reactive, just render a Vec<_> instead of <For/>
-                            //     each=graphs
-                            //     // the key should be unique and stable for each row
-                            //     // using an index is usually a bad idea, unless your list
-                            //     // can only grow, because movifile loadng items around inside the list
-                            //     // means their indices will change and they will all rerender
-                            //     key=|graph| graph.0
-                            //     // `children` receives each item from your `each` iterator
-                            //     // and returns a view
-                            //     children=move |(id, b64)| {
-                            //         log!("id -> {id}/{}", graph_i.get());
-                            //         let color = if id == graph_i.get() {"text-text"} else {"text-overlay2"};
-
-                            //         view! {
-                            //             <li class=move || { color } >"-"</li>
-                            //         }
-                            //     }
-                            // />
                             <button 
                                 on:click=move |_| {
-                                    set_graph_i.update( |i| if *i > 0 { *i -= 1 } )
+                                    if graph_i > 0 { graph_i -= 1 }
                                 }
                                 class="col-start-2 col-end-2 bg-surface0 text-text rounded-lg p-1 hover:bg-surface1"
                             >
@@ -319,9 +298,9 @@ fn HomePage() -> impl IntoView {
                                     let n_graphs = graphs.get().len();
                                     
                                     let g_i = if n_graphs > 0 {
-                                        graph_i.get() + 1
+                                        graph_i + 1
                                     } else {
-                                        graph_i.get()
+                                        graph_i
                                     };
 
                                     format!("{g_i} / {n_graphs}")
@@ -329,7 +308,7 @@ fn HomePage() -> impl IntoView {
                             }</div>
                             <button 
                                 on:click=move |_| {
-                                    set_graph_i.update( |i| if graphs.get().len() > 0 && *i < (graphs.get().len() - 1) { *i += 1 } )
+                                    if graphs.get().len() > 0 && graph_i < (graphs.get().len() - 1) { graph_i += 1 }
                                 }
                                 class="col-start-6 col-end-6 bg-surface0 text-text rounded-lg p-1 hover:bg-surface1"
                             >
