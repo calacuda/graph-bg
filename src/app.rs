@@ -1,7 +1,6 @@
 use crate::plot::Function;
 #[cfg(feature = "ssr")]
 use crate::plot::{mk_overlayed_image, plot::PlotConfig};
-use base64::{engine::general_purpose, Engine};
 use leptos::logging::*;
 use leptos::{
     html::{Img, Input},
@@ -58,15 +57,13 @@ fn HomePage() -> impl IntoView {
     let (min, set_min) = create_signal(String::new());
     let (max, set_max) = create_signal(String::new());
     let (bg_img, set_bg_img) = create_signal(String::new());
-    let (graphs, set_graphs) = create_signal(Vec::<String>::new());
+    let (graphs, set_graphs) = create_signal(Vec::<(usize, String)>::new());
     let (graph_i, set_graph_i) = create_signal(0);
 
     let input_element: NodeRef<Input> = create_node_ref();
     let img_input_element: NodeRef<Input> = create_node_ref();
     // let img_preview: NodeRef<Img> = create_node_ref();
     let graph_view: NodeRef<Img> = create_node_ref();
-
-    // TODO: add signal to store the images and make the carousel
 
     let on_change = move |_ev| {
         let img = web_sys::window()
@@ -83,7 +80,7 @@ fn HomePage() -> impl IntoView {
             let data = element.result().unwrap();
             let file_string = data.dyn_into::<JsString>().unwrap();
             set_bg_img(file_string.as_string().unwrap());
-            log!("file loaded: {:?}", file_string);
+            // log!("file loaded: {:?}", file_string);
         }) as Box<dyn FnMut(_)>);
 
         let reader = FileReader::new().unwrap();
@@ -101,18 +98,6 @@ fn HomePage() -> impl IntoView {
     };
 
     view! {
-        // <script type="text/javascript" inner_html=
-        //     r#"
-        //         function encodeImageFileAsURL(element) {
-        //             var file = element.files[0];
-        //             var reader = new FileReader();
-        //             reader.onloadend = function() {
-        //                 document.getElementById("baseImg").src = reader.result;
-        //             }
-        //             reader.readAsDataURL(file);
-        //         }
-        //     "#
-        // />
         <div class="p-4">
             <section id="header" class="grid gap-8 items-center text-center bg-surface0 p-4 rounded-lg">
                 <div>
@@ -122,8 +107,8 @@ fn HomePage() -> impl IntoView {
         </div>
         <hr class="bg-peach"/>
         <main class="bg-base p-2">
-            <section id="mainArea" class="grid gap-8 grid-cols-11">
-                <div class="col-span-4">
+            <section id="mainArea" class="grid gap-8 grid-cols-3">
+                <div>
                     <h4 class="text-2xl p-2 text-peach" align="center" >Graph Settings:</h4>
                     <section id="input" class="grid-rows-2 items-center text-center">
                         <div>
@@ -163,27 +148,29 @@ fn HomePage() -> impl IntoView {
 
                                                 spawn_local(async move {
                                                     // if let Some(img_file) = bg_img.get() {
-                                                        // log!("image input data: {}", );
-                                                        let img_dat = bg_img.get()
-                                                            .split_once(";base64,")
-                                                            .unwrap_or(("", bg_img.get().as_str()))
-                                                            .1
-                                                            .to_string();
-                                                        // make graph and display it in the preview
-                                                        if let Some(graph_elm) = graph_view() {
-                                                            // TODO: stop mulitple parallel requests
-                                                            match graph(img_dat, query, min, max).await {
-                                                                Ok(graph_dat) => {
-                                                                    let b64 = format!("data:image/png;base64,{graph_dat}");
-                                                                    graph_elm.set_src(&b64);
-                                                                    set_graphs.update(|graphs| graphs.push(b64));
-                                                                }
-                                                                Err(e) => {
-                                                                    error!("{e}");
-                                                                    // TODO: alert of error.
-                                                                }
+                                                    // log!("image input data: {}", );
+                                                    let bg_img_dat = move || { bg_img.get() };
+                                                    let img_dat = bg_img_dat()
+                                                        .split_once(";base64,")
+                                                        .unwrap_or(("", bg_img_dat().as_str()))
+                                                        .1
+                                                        .to_string();
+                                                    // make graph and display it in the preview
+                                                    if let Some(graph_elm) = graph_view() {
+                                                        // TODO: stop mulitple parallel requests
+                                                        match graph(img_dat, query, min, max).await {
+                                                            Ok(graph_dat) => {
+                                                                let b64 = format!("data:image/png;base64,{graph_dat}");
+                                                                // graph_elm.set_src(&b64);
+                                                                set_graphs.update(|graphs| graphs.push((graphs.len(), b64)));
+                                                                set_graph_i.set((move || graphs.get().len() - 1)());
+                                                            }
+                                                            Err(e) => {
+                                                                error!("{e}");
+                                                                // TODO: alert of error.
                                                             }
                                                         }
+                                                    }
                                                     // }
                                                 });
                                             },
@@ -231,7 +218,7 @@ fn HomePage() -> impl IntoView {
                         <hr class="bg-peach"/>
                         <div>
                             <h4 class="text-2xl p-2 text-peach">Functions:</h4>
-                            <ul>
+                            // <ul>
                                 <For
                                     // `each` takes any function that returns an iterator
                                     // this should usually be a signal or derived signal
@@ -246,7 +233,7 @@ fn HomePage() -> impl IntoView {
                                     // and returns a view
                                     children=move |(id, func, color)| {
                                         view! {
-                                            <li>
+                                            <div class="grid grid-cols-3 text-center">
                                                 // { id + 1 } "  =>    "
                                                 <input
                                                     on:change=move |ev| {
@@ -282,36 +269,74 @@ fn HomePage() -> impl IntoView {
                                                 >
                                                     "  Remove  "
                                                 </button>
-                                            </li>
+                                            </div>
                                         }
                                     }
                                 />
-                            </ul>
+                            // </ul>
                         </div>
                     </section>
                 </div>
-                <div class="col-span-7">
-                    <section id="display" class="grid-rows-3" >
-                        <div>
+                <div class="col-span-2 text-center">
+                    <section id="display" class="grid grid-rows-10" >
+                        <div class="row-span-8">
                             // TODO: make this display the graph from graphs identified by graph_i
-                            <img id="graph" class="rounded-lg size-full" node_ref=graph_view/>
+                            <img id="graph" class="rounded-lg size-full justify-center items-center" node_ref=graph_view src={move || { graphs.get().get(graph_i.get()).unwrap_or(&(0_usize, String::new())).1.clone() }}/>
                         </div>
-                        <div>
+                        <div class="grid flex grid-cols-7 text-2xl">
                             // TODO: put the circles here
-                        </div>
-                        <div>
-                            // TODO: keep a list of the previous graphs and add forward and back arrows
-                            // here
-                            //
-                            // OR
-                            //
-                            // TODO: download button
-                            //
-                            // OR
-                            //
-                            // TODO: combo of above
-                            //
-                            //  <- *********** ->
+                            // <For
+                            //     // `each` takes any function that returns an iterator
+                            //     // this should usually be a signal or derived signal
+                            //     // if it's not reactive, just render a Vec<_> instead of <For/>
+                            //     each=graphs
+                            //     // the key should be unique and stable for each row
+                            //     // using an index is usually a bad idea, unless your list
+                            //     // can only grow, because movifile loadng items around inside the list
+                            //     // means their indices will change and they will all rerender
+                            //     key=|graph| graph.0
+                            //     // `children` receives each item from your `each` iterator
+                            //     // and returns a view
+                            //     children=move |(id, b64)| {
+                            //         log!("id -> {id}/{}", graph_i.get());
+                            //         let color = if id == graph_i.get() {"text-text"} else {"text-overlay2"};
+
+                            //         view! {
+                            //             <li class=move || { color } >"-"</li>
+                            //         }
+                            //     }
+                            // />
+                            <button 
+                                on:click=move |_| {
+                                    set_graph_i.update( |i| if *i > 0 { *i -= 1 } )
+                                }
+                                class="col-start-2 col-end-2 bg-surface0 text-text rounded-lg p-1 hover:bg-surface1"
+                            >
+                                " <- "
+                            </button>
+                            <div class="col-start-4 col-end-4 bg-surface0 text-text rounded-lg p-1">{ 
+                                move || {
+                                    let n_graphs = graphs.get().len();
+                                    
+                                    let g_i = if n_graphs > 0 {
+                                        graph_i.get() + 1
+                                    } else {
+                                        graph_i.get()
+                                    };
+
+                                    format!("{g_i} / {n_graphs}")
+                                }
+                            }</div>
+                            <button 
+                                on:click=move |_| {
+                                    set_graph_i.update( |i| if graphs.get().len() > 0 && *i < (graphs.get().len() - 1) { *i += 1 } )
+                                }
+                                class="col-start-6 col-end-6 bg-surface0 text-text rounded-lg p-1 hover:bg-surface1"
+                            >
+                                " -> "
+                        </button>                        </div>
+                        <div class="grid flex grid-cols-7 text-2xl">
+                            <button class="col-start-3 col-end-6 bg-sapphire text-crust rounded-lg p-1 hover:bg-sky">"Download"</button>
                         </div>
                     </section>
                 </div>

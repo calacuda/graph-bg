@@ -27,10 +27,10 @@
             cargo-make
             trunk
             dart-sass
-            (rust-bin.selectLatestNightlyWith( toolchain: toolchain.default.override {
-              extensions= [ "rust-src" "rust-analyzer" ];
-              targets = [ "wasm32-unknown-unknown" ];
-            }))
+            # (rust-bin.selectLatestNightlyWith( toolchain: toolchain.default.override {
+            #   extensions= [ "rust-src" "rust-analyzer" ];
+            #   targets = [ "wasm32-unknown-unknown" ];
+            # }))
           ] ++ pkgs.lib.optionals pkg.stdenv.isDarwin [
             darwin.apple_sdk.frameworks.SystemConfiguration
           ];

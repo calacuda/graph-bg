@@ -577,28 +577,62 @@ video {
   grid-column: span 2 / span 2;
 }
 
-.col-span-3 {
-  grid-column: span 3 / span 3;
+.col-start-2 {
+  grid-column-start: 2;
 }
 
-.col-span-5 {
-  grid-column: span 5 / span 5;
+.col-start-3 {
+  grid-column-start: 3;
 }
 
-.col-span-4 {
-  grid-column: span 4 / span 4;
+.col-start-4 {
+  grid-column-start: 4;
 }
 
-.col-span-7 {
-  grid-column: span 7 / span 7;
+.col-start-6 {
+  grid-column-start: 6;
+}
+
+.col-end-2 {
+  grid-column-end: 2;
+}
+
+.col-end-4 {
+  grid-column-end: 4;
+}
+
+.col-end-5 {
+  grid-column-end: 5;
+}
+
+.col-end-6 {
+  grid-column-end: 6;
+}
+
+.row-span-8 {
+  grid-row: span 8 / span 8;
+}
+
+.mx-auto {
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .inline {
   display: inline;
 }
 
+.flex {
+  display: flex;
+}
+
 .grid {
   display: grid;
+}
+
+.size-\[80\%\] {
+  width: 80%;
+  height: 80%;
 }
 
 .size-fit {
@@ -621,16 +655,12 @@ video {
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.grid-cols-5 {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
 }
 
 .grid-cols-7 {
   grid-template-columns: repeat(7, minmax(0, 1fr));
-}
-
-.grid-cols-11 {
-  grid-template-columns: repeat(11, minmax(0, 1fr));
 }
 
 .grid-rows-2 {
@@ -641,8 +671,20 @@ video {
   grid-template-rows: repeat(3, minmax(0, 1fr));
 }
 
+.grid-rows-5 {
+  grid-template-rows: repeat(5, minmax(0, 1fr));
+}
+
+.grid-rows-10 {
+  grid-template-rows: repeat(10, minmax(0, 1fr));
+}
+
 .items-center {
   align-items: center;
+}
+
+.justify-center {
+  justify-content: center;
 }
 
 .gap-8 {
@@ -732,7 +774,27 @@ video {
   color: rgba(var(--ctp-crust), var(--tw-text-opacity));
 }
 
+.text-overlay2 {
+  --tw-text-opacity: 1;
+  color: rgba(var(--ctp-overlay2), var(--tw-text-opacity));
+}
+
 .text-peach {
   --tw-text-opacity: 1;
   color: rgba(var(--ctp-peach), var(--tw-text-opacity));
+}
+
+.text-text {
+  --tw-text-opacity: 1;
+  color: rgba(var(--ctp-text), var(--tw-text-opacity));
+}
+
+.hover\:bg-sky:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgba(var(--ctp-sky), var(--tw-bg-opacity));
+}
+
+.hover\:bg-surface1:hover {
+  --tw-bg-opacity: 1;
+  background-color: rgba(var(--ctp-surface1), var(--tw-bg-opacity));
 }
