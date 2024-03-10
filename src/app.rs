@@ -122,8 +122,8 @@ fn HomePage() -> impl IntoView {
         </div>
         <hr class="bg-peach"/>
         <main class="bg-base p-2">
-            <section id="mainArea" class="grid gap-8 grid-cols-3">
-                <div>
+            <section id="mainArea" class="grid gap-8 grid-cols-11">
+                <div class="col-span-4">
                     <h4 class="text-2xl p-2 text-peach" align="center" >Graph Settings:</h4>
                     <section id="input" class="grid-rows-2 items-center text-center">
                         <div>
@@ -290,7 +290,7 @@ fn HomePage() -> impl IntoView {
                         </div>
                     </section>
                 </div>
-                <div class="col-span-2">
+                <div class="col-span-7">
                     <section id="display" class="grid-rows-3" >
                         <div>
                             // TODO: make this display the graph from graphs identified by graph_i
@@ -311,7 +311,7 @@ fn HomePage() -> impl IntoView {
                             //
                             // TODO: combo of above
                             //
-                            //  <- [Download] ->
+                            //  <- *********** ->
                         </div>
                     </section>
                 </div>
