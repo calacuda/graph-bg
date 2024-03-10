@@ -14,4 +14,6 @@ A website to generate graphs of multiple functions over a set range with a user 
 8. [ ] deploy on github
 9. [ ] write a blog post about it for my blog. (found: [here](https://calacuda.github.io/))
 10. [ ] add a carousel to cycle though previous graphs
-11. [ ] improve calc back end efficiency.
+11. [ ] improve calc back end efficiency
+12. [ ] add pass back of error messages, malformed equations, and a warning of portential overruns.
+13. [ ] add a function formating guide tab

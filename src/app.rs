@@ -54,6 +54,8 @@ fn HomePage() -> impl IntoView {
     let img_preview: NodeRef<Img> = create_node_ref();
     let graph_view: NodeRef<Img> = create_node_ref();
 
+    // TODO: add signal to store the images and make the carousel
+
     view! {
         <script type="text/javascript" inner_html=
             r#"
@@ -212,7 +214,7 @@ fn HomePage() -> impl IntoView {
                                                                 f.iter_mut().for_each(|func| {if func.0 == id { func.2 = Some(new_color.clone()) }});
                                                             }
                                                         });
-                                                    } value={ if let Some(c) = color { c } else { "#FFFFFF".to_string() }}
+                                                    } value={ color.unwrap_or("#FFFFFF".to_string()) }
                                                     class="text-crust bg-overlay2 p-1 rounded-lg text-left"
                                                 />
                                                 <button
