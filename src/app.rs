@@ -1,12 +1,17 @@
 use crate::plot::Function;
 #[cfg(feature = "ssr")]
 use crate::plot::{mk_overlayed_image, plot::PlotConfig};
+use base64::{engine::general_purpose, Engine};
+use leptos::logging::*;
 use leptos::{
     html::{Img, Input},
     *,
 };
 use leptos_meta::*;
 use leptos_router::*;
+use wasm_bindgen::prelude::*;
+use web_sys::js_sys::JsString;
+use web_sys::{js_sys::Uint8Array, Event};
 
 #[component]
 pub fn App() -> impl IntoView {
@@ -36,6 +41,9 @@ pub fn App() -> impl IntoView {
 /// Renders the home page of your application.
 #[component]
 fn HomePage() -> impl IntoView {
+    use wasm_bindgen::JsCast;
+    use web_sys::{FileReader, HtmlInputElement};
+
     let initial_length = 0;
 
     // we generate an initial list as in <StaticList/>
@@ -49,26 +57,62 @@ fn HomePage() -> impl IntoView {
 
     let (min, set_min) = create_signal(String::new());
     let (max, set_max) = create_signal(String::new());
+    let (bg_img, set_bg_img) = create_signal(String::new());
+    let (graphs, set_graphs) = create_signal(Vec::<String>::new());
+    let (graph_i, set_graph_i) = create_signal(0);
 
     let input_element: NodeRef<Input> = create_node_ref();
-    let img_preview: NodeRef<Img> = create_node_ref();
+    let img_input_element: NodeRef<Input> = create_node_ref();
+    // let img_preview: NodeRef<Img> = create_node_ref();
     let graph_view: NodeRef<Img> = create_node_ref();
 
     // TODO: add signal to store the images and make the carousel
 
+    let on_change = move |_ev| {
+        let img = web_sys::window()
+            .expect("no global `window` exists")
+            .document()
+            .expect("should have a document on window")
+            .get_element_by_id("input_image")
+            .expect("should have a document on window")
+            .dyn_into::<HtmlInputElement>()
+            .expect("failed to make HtmlInputElement");
+
+        let set_base_img = Closure::wrap(Box::new(move |event: Event| {
+            let element = event.target().unwrap().dyn_into::<FileReader>().unwrap();
+            let data = element.result().unwrap();
+            let file_string = data.dyn_into::<JsString>().unwrap();
+            set_bg_img(file_string.as_string().unwrap());
+            log!("file loaded: {:?}", file_string);
+        }) as Box<dyn FnMut(_)>);
+
+        let reader = FileReader::new().unwrap();
+        reader.set_onload(Some(set_base_img.as_ref().unchecked_ref()));
+        set_base_img.forget();
+
+        reader
+            .read_as_data_url(
+                &img.files()
+                    .unwrap()
+                    .get(0)
+                    .expect("should have a file handle."),
+            )
+            .expect("failed to read image file");
+    };
+
     view! {
-        <script type="text/javascript" inner_html=
-            r#"
-                function encodeImageFileAsURL(element) {
-                    var file = element.files[0];
-                    var reader = new FileReader();
-                    reader.onloadend = function() {
-                        document.getElementById("baseImg").src = reader.result; 
-                    }
-                    reader.readAsDataURL(file);
-                }
-            "#
-        />
+        // <script type="text/javascript" inner_html=
+        //     r#"
+        //         function encodeImageFileAsURL(element) {
+        //             var file = element.files[0];
+        //             var reader = new FileReader();
+        //             reader.onloadend = function() {
+        //                 document.getElementById("baseImg").src = reader.result;
+        //             }
+        //             reader.readAsDataURL(file);
+        //         }
+        //     "#
+        // />
         <div class="p-4">
             <section id="header" class="grid gap-8 items-center text-center bg-surface0 p-4 rounded-lg">
                 <div>
@@ -78,18 +122,18 @@ fn HomePage() -> impl IntoView {
         </div>
         <hr class="bg-peach"/>
         <main class="bg-base p-2">
-            <section id="mainArea" class="grid gap-8 grid-cols-2">
+            <section id="mainArea" class="grid gap-8 grid-cols-3">
                 <div>
                     <h4 class="text-2xl p-2 text-peach" align="center" >Graph Settings:</h4>
                     <section id="input" class="grid-rows-2 items-center text-center">
                         <div>
-                            <section class="grid grid-cols-2">
+                            // <section class="grid grid-cols-2">
                             <div id="settings">
                                 <label for="image">"Base Image:"</label>
-                                <input type="file" name="image" class="bg-overlay2 rounded-lg p-1" onchange="encodeImageFileAsURL(this)" accept="image/png"/>
-                                // <div id="baseView">
-                                // <img id="baseImg" class="rounded-lg size-fit" align="right" node_ref=img_preview/>
-                                    // </div>
+                                // <input type="file" name="image" class="bg-overlay2 rounded-lg p-1" onchange="encodeImageFileAsURL(this)" accept="image/png"/>
+                                <input
+                                    on:change=on_change node_ref=img_input_element
+                                    type="file" name="image" id="input_image" class="bg-overlay2 rounded-lg p-1" accept="image/png"/>
                                 <form
                                     on:submit=move |ev| {
                                         ev.prevent_default();
@@ -118,18 +162,29 @@ fn HomePage() -> impl IntoView {
                                                 let query = funcs.get().clone().iter().map(|(_, f, c)| Function {func: f.to_owned(), color: c.clone()}).collect();
 
                                                 spawn_local(async move {
-                                                    if let Some(img) = img_preview() {
-                                                        let img_dat = img.src()
+                                                    // if let Some(img_file) = bg_img.get() {
+                                                        // log!("image input data: {}", );
+                                                        let img_dat = bg_img.get()
                                                             .split_once(";base64,")
-                                                            .unwrap_or(("", img.src().as_str()))
+                                                            .unwrap_or(("", bg_img.get().as_str()))
                                                             .1
                                                             .to_string();
                                                         // make graph and display it in the preview
-                                                        if let (Ok(graph_dat), Some(graph_elm)) = (graph(img_dat, query, min, max).await, graph_view())  {
+                                                        if let Some(graph_elm) = graph_view() {
                                                             // TODO: stop mulitple parallel requests
-                                                            graph_elm.set_src(&format!("data:image/png;base64,{graph_dat}"));
+                                                            match graph(img_dat, query, min, max).await {
+                                                                Ok(graph_dat) => {
+                                                                    let b64 = format!("data:image/png;base64,{graph_dat}");
+                                                                    graph_elm.set_src(&b64);
+                                                                    set_graphs.update(|graphs| graphs.push(b64));
+                                                                }
+                                                                Err(e) => {
+                                                                    error!("{e}");
+                                                                    // TODO: alert of error.
+                                                                }
+                                                            }
                                                         }
-                                                    }
+                                                    // }
                                                 });
                                             },
                                             _ => {}
@@ -160,7 +215,7 @@ fn HomePage() -> impl IntoView {
                                             set_max(event_target_value(&ev));
                                         }
                                         name="query[max]" required value="10" class="text-crust bg-overlay2 rounded-lg p-1"/><br/>
-                                    <label for="function">Function:</label><br/>
+                                    <label for="function">Function:</label>  // <br/>
                                     <input type="text" id="function" name="query[funcs]" value="" class="text-crust bg-overlay2 rounded-lg p-1" node_ref=input_element/>
                                     <input type="submit" id="addFunc" value=" Add Function " class="bg-sapphire text-crust p-1 rounded-lg"/><br/>
                                     <br/>
@@ -170,8 +225,8 @@ fn HomePage() -> impl IntoView {
                                     // <p></p>
                                 </form>
                             </div>
-                            <img id="baseImg" class="rounded-lg size-fit" align="right" node_ref=img_preview/>
-                            </section>
+                            // <img id="baseImg" class="rounded-lg size-fit" align="right" node_ref=img_preview/>
+                            // </section>
                         </div>
                         <hr class="bg-peach"/>
                         <div>
@@ -235,23 +290,31 @@ fn HomePage() -> impl IntoView {
                         </div>
                     </section>
                 </div>
-                <section id="display" class="grid-rows-2" >
-                    <div>
-                        <img id="graph" class="rounded-lg size-full" node_ref=graph_view/>
-                    </div>
-                    <div>
-                        // TODO: keep a list of the previous graphs and add forward and back arrows
-                        // here
-                        //
-                        // OR
-                        //
-                        // TODO: download button
-                        //
-                        // OR
-                        //
-                        // TODO: combo of above
-                    </div>
-                </section>
+                <div class="col-span-2">
+                    <section id="display" class="grid-rows-3" >
+                        <div>
+                            // TODO: make this display the graph from graphs identified by graph_i
+                            <img id="graph" class="rounded-lg size-full" node_ref=graph_view/>
+                        </div>
+                        <div>
+                            // TODO: put the circles here
+                        </div>
+                        <div>
+                            // TODO: keep a list of the previous graphs and add forward and back arrows
+                            // here
+                            //
+                            // OR
+                            //
+                            // TODO: download button
+                            //
+                            // OR
+                            //
+                            // TODO: combo of above
+                            //
+                            //  <- [Download] ->
+                        </div>
+                    </section>
+                </div>
             </section>
         </main>
     }

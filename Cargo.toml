@@ -35,6 +35,7 @@ anyhow = { version = "1.0.78" }
 thiserror = { version = "1.0.53" }
 base64 = "0.21.5"
 wasm-bindgen = "0.2.89"
+web-sys = { version = "0.3.69", features = [ "File", "Blob", "FileList", "FileReaderSync", "HtmlInputElement" ] }
 # leptos_form = { version = "0.1.8", optional = true }
 # web-sys = { version = "0.3.66", features = ["File", "FileReader"] }
 # tera = { version = "1.19.1", optional = true }
@@ -65,7 +66,7 @@ ssr = [
   "leptos_meta/ssr",
   "leptos_router/ssr",
   "leptos/serde",
-]
+ ]
 
 # Defines a size-optimized profile for the WASM bundle in release mode
 [profile.wasm-release]
